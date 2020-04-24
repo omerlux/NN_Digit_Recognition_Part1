@@ -34,7 +34,5 @@ dreader = mnist_dreader.dataReader()  # constructing mnist data reader object
 network = network_model.network([784, 5, 10])
 batch = dreader.get_batch(10, 'train')
 [mean_square_error, negative_log_loss] = network.feed_forward(batch)
-b = network.biases
-w = network.weights
 
 
