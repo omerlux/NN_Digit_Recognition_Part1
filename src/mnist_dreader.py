@@ -6,15 +6,11 @@ import matplotlib.pyplot as plot
 
 class dataReader(object):
     def __init__(self):
+        """ Intializing the data reader object.
+        55k train with labels,
+        5k valid with labels
+        and 10k test with labels"""
         print ('Initializing data reader object...')
-        # mndata = MNIST('samples')
-        # images, labels = mndata.load_training()
-        # self.train(images[0:55000], labels[0:55000])
-        # self.valid(images[55000:60000], labels[55000:60000])
-        # images, labels = mndata.load_testing()
-        # self.test(images[0:10000], labels[0:10000])
-
-
         image_size = 28  # each image is 28x28
 
         num_images = 60000  # there are 60k images
@@ -58,6 +54,9 @@ class dataReader(object):
         print ('Initialized!')
 
     def get_batch(self, m, type):  # m is the number of samples in one batch, type is the type of the samples
+        """ m - the amount of the examples in a batch,
+        type - what kind of examples it'll return,
+        :return a list of m examples of the specified type"""
         self.batchNum += 1
         switcher = {
             'train': self.train,
@@ -71,5 +70,6 @@ class dataReader(object):
         return switcher.get(type)[k:l]   # return the batch
 
     def shuffle_train(self):    # shuffle the train exmaples only
+        """ Shuffles the 55k train vector. Will change the next batch that will be given."""
         from random import shuffle
         shuffle(self.train)
