@@ -53,9 +53,9 @@ class dataReader(object):
         self.batchNum = -1
         print ('Initialized!')
 
-    def get_batch(self, m, type):  # m is the number of samples in one batch, type is the type of the samples
+    def get_batch(self, m, typ):  # m is the number of samples in one batch, type is the type of the samples
         """ m - the amount of the examples in a batch,
-        type - what kind of examples it'll return,
+        typ - what kind of examples it'll return,
         :return a list of m examples of the specified type"""
         self.batchNum += 1
         switcher = {
@@ -63,11 +63,11 @@ class dataReader(object):
             'valid': self.valid,
             'test': self.test
         }
-        max_batch_num = np.floor(len(switcher.get(type)) / m)  # maximum different batches
+        max_batch_num = np.floor(len(switcher.get(typ)) / m)  # maximum different batches
         k = int((self.batchNum % max_batch_num) * m)  # index is modulo from 0 to the length of the samples array
-        l = min(k + m, len(switcher.get(type)))       # maximum index is the length of the array
-        print ('Getting batch examples of {} sized {}, from [{},{}].'.format(type, m, k, l))
-        return switcher.get(type)[k:l]   # return the batch
+        l = min(k + m, len(switcher.get(typ)))       # maximum index is the length of the array
+        print ('Getting batch examples of {} sized {}, from [{},{}].'.format(typ, m, k, l))
+        return switcher.get(typ)[k:l]   # return the batch
 
     def shuffle_train(self):    # shuffle the train exmaples only
         """ Shuffles the 55k train vector. Will change the next batch that will be given."""

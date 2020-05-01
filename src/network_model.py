@@ -6,7 +6,18 @@ from sklearn.metrics import log_loss
 
 def sigmoid(z):
     """ Sigmoid function"""
-    return (1.0 / (1.0 + np.exp(-z)))
+    return 1.0 / (1.0 + np.exp(-z))
+
+
+def sigmoid_derivative(z):
+    """ Sigmoid derivative by z"""
+    return sigmoid(z)*(1-sigmoid(z))
+
+
+def cost_derivative(output, y):
+    """for the cost function (1/2)*(a-y)^2
+    the derivative is a-y"""
+    return output - y
 
 
 class network(object):
@@ -33,15 +44,17 @@ class network(object):
     def feed_forward(self, batch):
         """ Feeding forward the network with an intput of batch.
         That means we feed the network m times for an image which is a 784 input vector.
-        :return the loss functions. 1. mean square error, 2. negative log loss"""
+        :return the model's output
+        the loss functions. 1. mean square error, 2. negative log loss"""
         # creating the function for each loss function
         out = [None] * len(batch)
         for i, (x, y) in enumerate(batch):
             x = np.reshape(x, (784, 1))
             for (b, w) in zip(self.biases, self.weights):
                 x = sigmoid(np.dot(w, x) + b)  # a is now the output of the curr layer, and input of the next
-            out[i] = np.reshape(x, len(batch))
-        return [self.loss_mse(out, [i[1] for i in batch]),
+            out[i] = x  #np.reshape(x, len(batch))
+        return [out,    # this is the output of the network
+                self.loss_mse(out, [i[1] for i in batch]),
                 self.loss_nll(out, [i[1] for i in batch])]
 
     def loss_mse(self, out, y):
@@ -63,3 +76,57 @@ class network(object):
             y_vec[y[i]] = 1
             nll = nll + log_loss(y_vec, out[i]) # calculating error from each label and output
         return nll/len(y) # for the mean square error fix
+
+    def back_prop(self, batch):
+        """ batch - is a batch of input examples and labels.
+        :returns the loss over this batch
+                & the gradient vector of the batch"""
+        [out, loss_mse, loss_nll] = self.feed_forward(batch)
+        nabla_b = [np.zeros(b.shape) for b in self.biases]      # initializing the changes in b and w
+        nabla_w = [np.zeros(w.shape) for w in self.weights]
+        for x, y in batch:      # for every example with label do:
+            x = np.reshape(x, (784, 1))
+            # FOR EACH EXMAPLE: calculating the delta in b and w for single exmaple
+            nabla_b_single, nabla_w_single = self.back_prop_single(x, y)
+
+            # NEXT: adding the nabla_x_single to the nabla_x of all exmaples
+            nabla_b = [nb + delta_nb for nb, delta_nb in zip(nabla_b, nabla_b_single)]      # summing the nablas
+            nabla_w = [nw + delta_nw for nw, delta_nw in zip(nabla_w, nabla_w_single)]
+
+        # normalizing the results as the number of exmaples
+        gradient_biases = [(1.0/len(batch)) * nb for nb in nabla_b]       # the gradient is 1/m * sum(C_xi)
+        gradient_weights = [(1.0/len(batch)) * nw for nw in nabla_w]
+        return [gradient_biases, gradient_weights, loss_mse, loss_nll]
+
+    def back_prop_single(self, x, y):
+        # FEEDING FORWARD the network:
+        nabla_b_single = [np.zeros(b.shape) for b in
+                          self.biases]  # initializing the changes in b and w for single input
+        nabla_w_single = [np.zeros(w.shape) for w in self.weights]
+        activation = x
+        activations = [x]  # saving activations for all the layers
+        zs = []  # saving z vectors for all layers
+        for b, w in zip(self.biases, self.weights):
+            z = np.dot(w, activation) + b  # setting new z= w*a+b
+            zs.append(z)  # saving z
+            activation = sigmoid(z)  # setting new output of the current layer
+            activations.append(activation)  # saving activations
+        # --> we saved all the activations and zs for each layer
+
+        # GOING BACKWARD to calculate the cost change by:
+        # BP1 -> delta_L = Nabla_C_a . sigmoid_derivative(z_L)
+        # BP2 -> delta_l = ((w_l+1)T * delta_l+1) . sigmoid_derivative(z_l)
+        # BP3 -> Nabla_C_bj_l = delta_j_l
+        # BP4 -> Nabla_C_wjk_l = delta_j_l * activation_k_l-1
+        delta = cost_derivative(activations[-1], y) * sigmoid_derivative(zs[-1])  # by BP1 equation
+        nabla_b_single[-1] = delta  # by BP3
+        nabla_w_single[-1] = np.dot(delta, np.transpose(activations[-2]))  # by BP4 # TODO: check size of both
+        # calculating all the nabla_w when walking backwards in the network
+        for l in xrange(2, self.num_of_layers):
+            z = zs[-l]
+            delta = np.dot(np.transpose(self.weights[-l + 1]), delta) * sigmoid_derivative(z)  # by BP2
+            nabla_b_single[-l] = delta  # by BP3
+            nabla_w_single[-l] = np.dot(delta, np.transpose(activations[-l - 1]))  # by BP4 # TODO: check size of both
+        # --> we saved all the changes in 'w' and 'b' for the specific example.
+        return nabla_b_single, nabla_w_single
+
