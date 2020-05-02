@@ -66,10 +66,13 @@ class dataReader(object):
         max_batch_num = np.floor(len(switcher.get(typ)) / m)  # maximum different batches
         k = int((self.batchNum % max_batch_num) * m)  # index is modulo from 0 to the length of the samples array
         l = min(k + m, len(switcher.get(typ)))       # maximum index is the length of the array
-        print ('Getting batch examples of {} sized {}, from [{},{}].'.format(typ, m, k, l))
+        # print ('Getting batch examples of {} sized {}, from [{},{}].'.format(typ, m, k, l))
         return switcher.get(typ)[k:l]   # return the batch
 
     def shuffle_train(self):    # shuffle the train exmaples only
         """ Shuffles the 55k train vector. Will change the next batch that will be given."""
         from random import shuffle
         shuffle(self.train)
+
+    def reset_batch_num(self):
+        self.batchNum = -1

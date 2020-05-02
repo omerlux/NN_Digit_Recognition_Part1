@@ -1,12 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plot
+import scipy
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import log_loss
 
 
 def sigmoid(z):
-    """ Sigmoid function"""
-    return 1.0 / (1.0 + np.exp(-z))
+    """ Sigmoid function
+    1.0 / (1.0 + np.exp(-z))"""
+    return scipy.special.expit(z)
 
 
 def sigmoid_derivative(z):
@@ -40,22 +42,27 @@ class network(object):
         self.weights = [sigma2 * np.random.randn(dim2, dim1) + meu2 for (dim1, dim2) in zip(sizes[:-1], sizes[1:])]
         # size[:-1], size[1:] creates pairs of elements in the sequence sizes with the next element,
         # because you pair up all elements except the last (sizes[:-1]) with all elements except the first (sizes[1:])
+        self.biases_num = sum(sizes) - sizes[0]
+        self.weights_num = sum(x*y for (x, y) in zip(sizes[:-1], sizes[1:]))
 
-    def feed_forward(self, batch):
+    def feed_forward(self, batch, only_out):
         """ Feeding forward the network with an intput of batch.
         That means we feed the network m times for an image which is a 784 input vector.
-        :return the model's output
+        :return the model's output - ONLY output if bool_only_out=1 else, adding:
         the loss functions. 1. mean square error, 2. negative log loss"""
         # creating the function for each loss function
-        out = [None] * len(batch)
-        for i, (x, y) in enumerate(batch):
+        out = []
+        for (x, y) in batch:
             x = np.reshape(x, (784, 1))
             for (b, w) in zip(self.biases, self.weights):
                 x = sigmoid(np.dot(w, x) + b)  # a is now the output of the curr layer, and input of the next
-            out[i] = x  #np.reshape(x, len(batch))
-        return [out,    # this is the output of the network
-                self.loss_mse(out, [i[1] for i in batch]),
-                self.loss_nll(out, [i[1] for i in batch])]
+            out.append(x)     #np.reshape(x, len(batch))
+        if only_out:
+            return out
+        else:
+            return [out,    # this is the output of the network
+                    self.loss_mse(out, [i[1] for i in batch]),
+                    self.loss_nll(out, [i[1] for i in batch])]
 
     def loss_mse(self, out, y):
         """ :return the mean square error of @ out compared to @ y"""
@@ -81,7 +88,7 @@ class network(object):
         """ batch - is a batch of input examples and labels.
         :returns the loss over this batch
                 & the gradient vector of the batch"""
-        [out, loss_mse, loss_nll] = self.feed_forward(batch)
+        [_, loss_mse, loss_nll] = self.feed_forward(batch, 0)
         nabla_b = [np.zeros(b.shape) for b in self.biases]      # initializing the changes in b and w
         nabla_w = [np.zeros(w.shape) for w in self.weights]
         for x, y in batch:      # for every example with label do:
