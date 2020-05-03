@@ -32,12 +32,12 @@ class network(object):
         self.num_of_layers = len(sizes)
         # Biases initiate - randomize by normal distribution biases as the numbers of neurons in the network (without
         # input neurons)
-        sigma = 1
+        sigma = 0.5
         meu = 0
         self.biases = [sigma * np.random.randn(dimensions, 1) + meu for dimensions in sizes[1:]]
         # dimensions: [#2nd layer, ... , #outputs], so we have X biases as the numbers of neurons except the inputs
         # Weights initiate - randomize by normal distribution weights for each neuron
-        sigma2 = 1
+        sigma2 = 0.5
         meu2 = 0
         self.weights = [sigma2 * np.random.randn(dim2, dim1) + meu2 for (dim1, dim2) in zip(sizes[:-1], sizes[1:])]
         # size[:-1], size[1:] creates pairs of elements in the sequence sizes with the next element,
@@ -86,9 +86,7 @@ class network(object):
 
     def back_prop(self, batch):
         """ batch - is a batch of input examples and labels.
-        :returns the loss over this batch
-                & the gradient vector of the batch"""
-        [_, loss_mse, loss_nll] = self.feed_forward(batch, 0)
+        :returns the gradient vector of the batch"""
         nabla_b = [np.zeros(b.shape) for b in self.biases]      # initializing the changes in b and w
         nabla_w = [np.zeros(w.shape) for w in self.weights]
         for x, y in batch:      # for every example with label do:
@@ -103,7 +101,7 @@ class network(object):
         # normalizing the results as the number of exmaples
         gradient_biases = [(1.0/len(batch)) * nb for nb in nabla_b]       # the gradient is 1/m * sum(C_xi)
         gradient_weights = [(1.0/len(batch)) * nw for nw in nabla_w]
-        return [gradient_biases, gradient_weights, loss_mse, loss_nll]
+        return [gradient_biases, gradient_weights]
 
     def back_prop_single(self, x, y):
         # FEEDING FORWARD the network:
@@ -137,3 +135,8 @@ class network(object):
         # --> we saved all the changes in 'w' and 'b' for the specific example.
         return nabla_b_single, nabla_w_single
 
+    def update_wb(self, nabla_biases, nabla_weights, eta):
+        self.weights = [w - eta * nw
+                        for w, nw in zip(self.weights, nabla_weights)]
+        self.biases = [b - eta * nb
+                       for b, nb in zip(self.biases, nabla_biases)]

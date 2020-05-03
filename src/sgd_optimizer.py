@@ -24,13 +24,13 @@ class SGD(object):
         """ 1 step for 1 batch - updates the network's weights and biases
         :returns negative log loss, gradient norms"""
         batch = self.data_reader.get_batch(self.batch_size, 'train')
+        # calculating negative log loss
+        #[_, _, neg_log_loss] = self.feed_forward(batch, 0) # TODO: uncomment
+        neg_log_loss = 0    # TODO: DELETE
         # getting gradient of weights and biases
-        nabla_biases, nabla_weights, neg_log_loss, _ = self.network.back_prop(batch)
+        nabla_biases, nabla_weights = self.network.back_prop(batch)
         # updating them
-        self.network.weights = [w - self.eta * nw
-                                for w, nw in zip(self.network.weights, nabla_weights)]
-        self.network.biases = [b - self.eta * nb
-                               for b, nb in zip(self.network.biases, nabla_biases)]
+        self.network.update_wb(nabla_biases, nabla_weights, self.eta)
         return neg_log_loss, np.abs(nabla_biases), np.abs(nabla_weights)  # saving training: NLL, gradient norms
 
     def train_epoch(self):
@@ -54,9 +54,10 @@ class SGD(object):
             #             gradient_norms.append(w_in)
 
         nll = neg_log_loss / self.total_batches
-        max_gn = 0  # np.amax(gradient_norms)      # max gradient norm
+        max_gn = 0  # np.amax(gradient_norms)      # max gradient norm #TODO: FIX IT
         min_gn = 0  # np.amin(gradient_norms)      # min gradient norm
         avg_gn = 0  # np.mean(gradient_norms)      # average gradient norm
+
         return nll, avg_gn, min_gn, max_gn  # return negative log loss of the training
 
     def predict(self, test_data):

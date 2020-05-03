@@ -74,7 +74,7 @@ network = network_model.network([784, 30, 10])  # making the network
 # print(max_relative_error)
 
 learning_rate = 3.0
-batch_size = 10
+batch_size = 1000
 epochs = 30
 # making Stochastic gradient descent optimizer
 SGD_optimizer = sgd_optimizer.SGD(network, learning_rate, batch_size, epochs)
