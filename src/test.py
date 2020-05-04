@@ -34,16 +34,16 @@ import sgd_optimizer
 #     plot.show()
 #     print(batch[i][1])
 
-network = network_model.network([784, 30, 10])  # making the network
+network = network_model.network([784, 400, 200, 50, 10])  # making the network
 
 # # Test 4 - feew_forward
 # batch = dreader.get_batch(10, 'train')
-# [output, mean_square_error, negative_log_loss] = network.feed_forward(batch)
+# [output, mean_square_error, negative_log_loss] = network.feed_forward(batch, 0)
 
 # # Test 5 - back_prop checking - debuging gradient
 # batch = dreader.get_batch(30, 'train')
 # # nabla_wj ~ (C(w + epsilon*e_j) - C(w))/epsilon    *when e_j is the unit vector j
-# gradient_biases, gradient_weights, loss_mse, loss_nll = network.back_prop(batch)   # should be the real derivative of the w
+# gradient_biases, gradient_weights = network.back_prop(batch)   # should be the real derivative of the w
 # epsilon = 10**-4
 # gradient_w_avg_relative_error = 0
 # gradient_w_sum_relative_error = 0
@@ -54,17 +54,17 @@ network = network_model.network([784, 30, 10])  # making the network
 #     w_neuron = rnd.randint(0, len(network.weights[w_layer])-1)    # random neuron
 #     w = rnd.randint(0, len(network.weights[w_layer][w_neuron])-1) # random weight
 #     # for each weight, will add epsilon for the w only, and calculate (C(w + epsilon*e_j) - C(w))/epsilon
-#     cost_func_normal = network.feed_forward(batch)[1]       # normal cost
+#     _, cost_func_normal, _ = network.feed_forward(batch, 0)       # normal cost
 #     network.weights[w_layer][w_neuron][w] += epsilon
-#     cost_func_epsilon = network.feed_forward(batch)[1]      # epsilon cost
+#     _, cost_func_epsilon, _ = network.feed_forward(batch, 0)      # epsilon cost
 #     network.weights[w_layer][w_neuron][w] -= epsilon
 #
-#     estimated_gradient = (cost_func_epsilon - cost_func_normal)/epsilon     # estimated gradient
+#     estimated_gradient = (cost_func_epsilon-cost_func_normal)/epsilon     # estimated gradient
 #     backprop_gradient = gradient_weights[w_layer][w_neuron][w]              # backpropagation gradient
 #
 #     if backprop_gradient != estimated_gradient:
-#         relative_error = np.abs(estimated_gradient - backprop_gradient) / np.abs(
-#             estimated_gradient + backprop_gradient)  # |X-Y|/|X+Y|
+#         relative_error = (np.abs(estimated_gradient - backprop_gradient)
+#                           / np.abs(estimated_gradient + backprop_gradient))  # |X-Y|/|X+Y|
 #         gradient_w_sum_relative_error += relative_error
 #         max_relative_error = max(max_relative_error, relative_error)
 #         if j != 0:
@@ -74,8 +74,8 @@ network = network_model.network([784, 30, 10])  # making the network
 # print(max_relative_error)
 
 learning_rate = 3.0
-batch_size = 1000
-epochs = 30
+batch_size = 10
+epochs = 10
 # making Stochastic gradient descent optimizer
 SGD_optimizer = sgd_optimizer.SGD(network, learning_rate, batch_size, epochs)
 SGD_optimizer.training_program()

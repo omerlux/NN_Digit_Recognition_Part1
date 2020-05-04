@@ -22,6 +22,16 @@ def cost_derivative(output, y):
     return output - y
 
 
+def vectorized_res(j):
+    """Return a 10-dimensional unit vector with a 1.0 in the jth
+    position and zeroes elsewhere. This is used to convert a digit
+    (0...9) into a corresponding desired output from the neural
+    network."""
+    e = np.zeros((10, 1))
+    e[j] = 1.0
+    return e
+
+
 class network(object):
     def __init__(self, sizes):  # sizes=[#inputs, #2nd layer, .... , #outputs]
         """ Initializing the network object
@@ -56,33 +66,37 @@ class network(object):
             x = np.reshape(x, (784, 1))
             for (b, w) in zip(self.biases, self.weights):
                 x = sigmoid(np.dot(w, x) + b)  # a is now the output of the curr layer, and input of the next
-            out.append(x)     #np.reshape(x, len(batch))
+            out.append(x)            #np.reshape(x, len(batch))
         if only_out:
             return out
         else:
             return [out,    # this is the output of the network
-                    self.loss_mse(out, [i[1] for i in batch]),
-                    self.loss_nll(out, [i[1] for i in batch])]
+                    self.loss_mse(out, [y for (_, y) in batch]),
+                    self.loss_nll(out, [y for (_, y) in batch])]
 
     def loss_mse(self, out, y):
         """ :return the mean square error of @ out compared to @ y"""
         # y - is the labels, out is the network output
         mse = 0     # mean square error
-        for i in range(0, len(y)):
-            y_vec = np.zeros(10)
-            y_vec[y[i]] = 1
-            mse = mse + mean_squared_error(y_vec, out[i]) # calculating error from each label and output
-        return mse/len(y) # for the mean square error fix
+        for res, y_res in zip(out, y):
+            mse += mean_squared_error(vectorized_res(y_res), res)   # calculating error from each label and output
+        # for i in range(0, len(y)):
+        #     y_vec = np.zeros(10)
+        #     y_vec[y[i]] = 1
+        #     mse = mse + mean_squared_error(y_vec, out[i])
+        return mse/len(y)   # for the mean square error fix
 
     def loss_nll(self, out, y):
         """ :return the negative log loss of @ out compared to @ y"""
         # y - is the labels, out is the network output
         nll = 0     # negative log los = -log P(yt|yp) = -(yt log(yp) + (1 - yt) log(1 - yp))
-        for i in range(0, len(y)):
-            y_vec = np.zeros(10)
-            y_vec[y[i]] = 1
-            nll = nll + log_loss(y_vec, out[i]) # calculating error from each label and output
-        return nll/len(y) # for the mean square error fix
+        for res, y_res in zip(out, y):
+            nll += log_loss(vectorized_res(y_res), res)  # calculating error from each label and output
+        # for i in range(0, len(y)):
+        #     y_vec = np.zeros(10)
+        #     y_vec[y[i]] = 1
+        #     nll = nll + log_loss(y_vec, out[i]) # calculating error from each label and output
+        return nll/len(y)   # for the mean square error fix
 
     def back_prop(self, batch):
         """ batch - is a batch of input examples and labels.
@@ -97,11 +111,7 @@ class network(object):
             # NEXT: adding the nabla_x_single to the nabla_x of all exmaples
             nabla_b = [nb + delta_nb for nb, delta_nb in zip(nabla_b, nabla_b_single)]      # summing the nablas
             nabla_w = [nw + delta_nw for nw, delta_nw in zip(nabla_w, nabla_w_single)]
-
-        # normalizing the results as the number of exmaples
-        gradient_biases = [(1.0/len(batch)) * nb for nb in nabla_b]       # the gradient is 1/m * sum(C_xi)
-        gradient_weights = [(1.0/len(batch)) * nw for nw in nabla_w]
-        return [gradient_biases, gradient_weights]
+        return [nabla_b, nabla_w]
 
     def back_prop_single(self, x, y):
         # FEEDING FORWARD the network:
@@ -123,7 +133,7 @@ class network(object):
         # BP2 -> delta_l = ((w_l+1)T * delta_l+1) . sigmoid_derivative(z_l)
         # BP3 -> Nabla_C_bj_l = delta_j_l
         # BP4 -> Nabla_C_wjk_l = delta_j_l * activation_k_l-1
-        delta = cost_derivative(activations[-1], y) * sigmoid_derivative(zs[-1])  # by BP1 equation
+        delta = cost_derivative(activations[-1], vectorized_res(y)) * sigmoid_derivative(zs[-1])  # by BP1 equation
         nabla_b_single[-1] = delta  # by BP3
         nabla_w_single[-1] = np.dot(delta, np.transpose(activations[-2]))  # by BP4 # TODO: check size of both
         # calculating all the nabla_w when walking backwards in the network
@@ -135,8 +145,9 @@ class network(object):
         # --> we saved all the changes in 'w' and 'b' for the specific example.
         return nabla_b_single, nabla_w_single
 
-    def update_wb(self, nabla_biases, nabla_weights, eta):
-        self.weights = [w - eta * nw
+    def update_wb(self, nabla_biases, nabla_weights, eta, len_batch):
+        # normalizing the results as the number of exmaples
+        self.weights = [w - (eta/len_batch) * nw
                         for w, nw in zip(self.weights, nabla_weights)]
-        self.biases = [b - eta * nb
+        self.biases = [b - (eta/len_batch) * nb
                        for b, nb in zip(self.biases, nabla_biases)]
