@@ -34,7 +34,7 @@ import sgd_optimizer
 #     plot.show()
 #     print(batch[i][1])
 
-network = network_model.network([784, 400, 200, 50, 10])  # making the network
+# network = network_model.network([784, 400, 200, 50, 10])  # making the network
 
 # # Test 4 - feew_forward
 # batch = dreader.get_batch(10, 'train')
@@ -77,9 +77,26 @@ network = network_model.network([784, 400, 200, 50, 10])  # making the network
 # print(gradient_w_avg_relative_error)
 # print(max_relative_error)
 
+# # Working learning MNIST #1
+# network = network_model.network([784, 400, 200, 50, 10])  # making the network
+# learning_rate = 3.0
+# batch_size = 10
+# epochs = 10
+# # making Stochastic gradient descent optimizer
+# SGD_optimizer = sgd_optimizer.SGD(network, learning_rate, batch_size, epochs)
+# SGD_optimizer.training_program()
+
+# Comparing SGD to Momentum
 learning_rate = 3.0
+gamma = 0.9
 batch_size = 10
 epochs = 10
-# making Stochastic gradient descent optimizer
-SGD_optimizer = sgd_optimizer.SGD(network, learning_rate, batch_size, epochs)
-SGD_optimizer.training_program()
+network_SGD = network_model.network([784, 30, 10])  # making the network SGD
+network_Momentum = network_model.network([784, 30, 10])  # making the network SGD
+
+SGD_optimizer = sgd_optimizer.SGD(network_Momentum, learning_rate, gamma, batch_size, epochs)
+SGD_optimizer.training_program('Momentum')   # SGD optimizer chosen
+
+SGD_optimizer = sgd_optimizer.SGD(network_SGD, learning_rate, gamma, batch_size, epochs)
+SGD_optimizer.training_program('SGD')   # SGD optimizer chosen
+

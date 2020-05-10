@@ -53,11 +53,13 @@ class network(object):
         sigma = 0.5
         meu = 0
         self.biases = [sigma * np.random.randn(dimensions, 1) + meu for dimensions in sizes[1:]]
+        self.delta_biases = [np.zeros((dimensions, 1)) for dimensions in sizes[1:]]
         # dimensions: [#2nd layer, ... , #outputs], so we have X biases as the numbers of neurons except the inputs
         # Weights initiate - randomize by normal distribution weights for each neuron
         sigma2 = 0.5
         meu2 = 0
         self.weights = [sigma2 * np.random.randn(dim2, dim1) + meu2 for (dim1, dim2) in zip(sizes[:-1], sizes[1:])]
+        self.delta_weights = [np.zeros((dim2, dim1)) for (dim1, dim2) in zip(sizes[:-1], sizes[1:])]
         # size[:-1], size[1:] creates pairs of elements in the sequence sizes with the next element,
         # because you pair up all elements except the last (sizes[:-1]) with all elements except the first (sizes[1:])
         self.biases_num = sum(sizes) - sizes[0]
@@ -159,3 +161,13 @@ class network(object):
                         for w, nw in zip(self.weights, nabla_weights)]
         self.biases = [b - (eta/len_batch) * nb
                        for b, nb in zip(self.biases, nabla_biases)]
+
+    def update_wb_momentum(self, nabla_biases, nabla_weights, eta, gamma, len_batch):
+        """ check the website https://ruder.io/optimizing-gradient-descent/index.html#rmsprop to see momentum"""
+        # normalizing the results as the number of exmaples
+        self.delta_biases = [v * gamma + (eta * nb)/len_batch for v, nb in zip(self.delta_biases, nabla_biases)]
+        self.delta_weights = [v * gamma + (eta * nw)/len_batch for v, nw in zip(self.delta_weights, nabla_weights)]
+        self.biases = [b - nb
+                       for b, nb in zip(self.biases, self.delta_biases)]
+        self.weights = [w - nw
+                        for w, nw in zip(self.weights, self.delta_weights)]

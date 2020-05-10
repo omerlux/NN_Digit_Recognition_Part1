@@ -8,7 +8,7 @@ import network_model
 
 
 class SGD(object):
-    def __init__(self, network, eta, batch_size, epochs_size):
+    def __init__(self, network, eta, gamma, batch_size, epochs_size):
         """ Initializing the SGD optimizer object:
         @network is the neural network,
         @eta is the learing rate
@@ -16,12 +16,13 @@ class SGD(object):
         @epochs_size is the number of epochs that will be running"""
         self.network = network
         self.eta = eta
+        self.gamma = gamma
         self.batch_size = batch_size
         self.epochs_size = epochs_size
         self.data_reader = mnist_dreader.dataReader()  # constructing mnist data reader object
         self.total_batches = np.floor(len(self.data_reader.train) / batch_size)
 
-    def step(self):
+    def step(self, optimizer):
         """ 1 step for 1 batch - updates the network's weights and biases
         :returns negative log loss, gradient norms"""
         batch = self.data_reader.get_batch(self.batch_size, 'train')
@@ -31,10 +32,13 @@ class SGD(object):
         # getting gradient of weights and biases
         nabla_biases, nabla_weights = self.network.back_prop(batch)
         # updating them
-        self.network.update_wb(nabla_biases, nabla_weights, self.eta, len(batch))
+        if optimizer == 'SGD':             # SGD is the normal gradient descent
+            self.network.update_wb(nabla_biases, nabla_weights, self.eta, len(batch))
+        elif optimizer == 'Momentum':      # Momentum - check in here -> https://ruder.io/optimizing-gradient-descent/index.html#rmsprop
+            self.network.update_wb_momentum(nabla_biases, nabla_weights, self.eta, self.gamma, len(batch))
         return neg_log_loss, np.abs(nabla_biases), np.abs(nabla_weights)  # saving training: NLL, gradient norms
 
-    def train_epoch(self):
+    def train_epoch(self, optimizer):
         """ Training on all the training sets
         :returns negative log loss, avg/min/max gradient norm"""
         self.data_reader.reset_batch_num()  # start from the first batch
@@ -42,7 +46,7 @@ class SGD(object):
         neg_log_loss = 0  # saving the negative log loss of the training
         gradient_norms = []  # array for gradient norms
         for i in range(int(self.total_batches)):
-            nll_delta, nb, nw = self.step()  # 1 batch, updates the weights and biases
+            nll_delta, nb, nw = self.step(optimizer)  # 1 batch, updates the weights and biases
             neg_log_loss += nll_delta
 
             # TODO: find a way to get max avg and min of the weights and biases FAST - comment it to fast things up
@@ -70,7 +74,7 @@ class SGD(object):
                        for (out, tup_xy) in zip(test_data_out, test_data)]
         return sum(int(x == y) for (x, y) in data_result)
 
-    def training_program(self):
+    def training_program(self, optimizer):
         """ Training  the network for epochs_size epochs """
         nll_learn_curve = []
         train_passed = []
@@ -81,7 +85,7 @@ class SGD(object):
         for i in range(self.epochs_size):
             print ("Started Epoch {0}...").format(i)
             start_time = time.time()  # counting time
-            nll, avg_gn, min_gn, max_gn = self.train_epoch()  # training 1 epoch + saving NLL
+            nll, avg_gn, min_gn, max_gn = self.train_epoch(optimizer)  # training 1 epoch + saving NLL
             sum_train = self.predict(self.data_reader.train)  # checking the valid trains (55k)
             max_train = len(self.data_reader.train)
             sum_valid = self.predict(self.data_reader.valid)  # checking the valid tests (5k)
