@@ -43,24 +43,28 @@ network = network_model.network([784, 400, 200, 50, 10])  # making the network
 # # Test 5 - back_prop checking - debuging gradient
 # batch = dreader.get_batch(30, 'train')
 # # nabla_wj ~ (C(w + epsilon*e_j) - C(w))/epsilon    *when e_j is the unit vector j
-# gradient_biases, gradient_weights = network.back_prop(batch)   # should be the real derivative of the w
-# epsilon = 10**-4
+# gradient_biases, gradient_weights = network.back_prop(batch)  # should be the real derivative of the w
+# epsilon = 10 ** -7
 # gradient_w_avg_relative_error = 0
 # gradient_w_sum_relative_error = 0
 # max_relative_error = 0
 #
-# for j in range(0, (784*30+30*10)//10):  # 10% of the weights
-#     w_layer = rnd.randint(0, len(network.weights)-1)              # random layer
-#     w_neuron = rnd.randint(0, len(network.weights[w_layer])-1)    # random neuron
-#     w = rnd.randint(0, len(network.weights[w_layer][w_neuron])-1) # random weight
+# for j in range(0, (784 * 30 + 30 * 10) // 10):  # 10% of the weights
+#     w_layer = rnd.randint(0, len(network.weights) - 1)  # random layer
+#     w_neuron = rnd.randint(0, len(network.weights[w_layer]) - 1)  # random neuron
+#     w = rnd.randint(0, len(network.weights[w_layer][w_neuron]) - 1)  # random weight
 #     # for each weight, will add epsilon for the w only, and calculate (C(w + epsilon*e_j) - C(w))/epsilon
-#     _, cost_func_normal, _ = network.feed_forward(batch, 0)       # normal cost
+#     out, _, _ = network.feed_forward(batch, 0)  # normal cost
 #     network.weights[w_layer][w_neuron][w] += epsilon
-#     _, cost_func_epsilon, _ = network.feed_forward(batch, 0)      # epsilon cost
+#     out_epsilon, _, _ = network.feed_forward(batch, 0)  # epsilon cost
 #     network.weights[w_layer][w_neuron][w] -= epsilon
 #
-#     estimated_gradient = (cost_func_epsilon-cost_func_normal)/epsilon     # estimated gradient
-#     backprop_gradient = gradient_weights[w_layer][w_neuron][w]              # backpropagation gradient
+#     # calculating the quadratic cost function for a batch (with or without epsilon)
+#     cost_func_normal = np.sum([network_model.cost_func_single(a, y) for a, (_, y) in zip(out, batch)])
+#     cost_func_epsilon = np.sum([network_model.cost_func_single(a, y) for a, (_, y) in zip(out_epsilon, batch)])
+#
+#     estimated_gradient = (cost_func_epsilon - cost_func_normal) / epsilon  # estimated gradient
+#     backprop_gradient = gradient_weights[w_layer][w_neuron][w]  # backpropagation gradient
 #
 #     if backprop_gradient != estimated_gradient:
 #         relative_error = (np.abs(estimated_gradient - backprop_gradient)
@@ -79,4 +83,3 @@ epochs = 10
 # making Stochastic gradient descent optimizer
 SGD_optimizer = sgd_optimizer.SGD(network, learning_rate, batch_size, epochs)
 SGD_optimizer.training_program()
-

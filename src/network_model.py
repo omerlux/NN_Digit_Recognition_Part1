@@ -32,6 +32,14 @@ def vectorized_res(j):
     return e
 
 
+def cost_func_single(out, y):
+    """ :returns the quadratic cost function for single sample"""
+    y_vec = vectorized_res(y)
+    cost_j = [np.power(aj - yj, 2) for aj, yj in zip(out, y_vec)]
+    return (1/2.0)*np.sum(cost_j)
+
+
+
 class network(object):
     def __init__(self, sizes):  # sizes=[#inputs, #2nd layer, .... , #outputs]
         """ Initializing the network object
