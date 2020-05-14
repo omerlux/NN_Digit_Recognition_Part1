@@ -46,7 +46,7 @@ def cost_func_single(out, y):
 
 
 class network(object):
-    def __init__(self, sizes, cost):  # sizes=[#inputs, #2nd layer, .... , #outputs]
+    def __init__(self, sizes, cost='cross-entropy'):  # sizes=[#inputs, #2nd layer, .... , #outputs]
         """ Initializing the network object
         sizes is array that will contain the number of neurons in each layer.
         the weights and biases for each neuron will be randomly chosen from a Norm~(meu,sigma) cdf"""
