@@ -1,13 +1,13 @@
 # Neural-Network---Part-1---Digit-Recognition
 Machine Learning Digit Recognition
 
-I made a network to recognize handwriten digits.
-Network - The network is the neural network which can be calculated by 2 cost function, quadratic and cross-entropy.
-The network can build up with as many of layers you whish, when the input is 784 neurons and the output is 10.
+I made a network to recognize handwritten digits.
+Network - The network is the neural network, which can be calculated by 2 cost function, quadratic and cross-entropy.
+The network can build up with as many layers as you wish, when the input is 784 neurons and the output is 10.
 
-SGD optimizer - The optimizer can be (for now) 3 different optimizers, that are established on the back propagation algorithem for gradient decent. 
+SGD optimizer - The optimizer can be (for now) 3 different optimizers, that are established on the back propagation algorithm for gradient decent.
 The optimizers are:
-1. Stochastic Gradient decent.
+1. Stochastic Gradient descent.
 2. Momentum.
 3. RMSProp.
 
