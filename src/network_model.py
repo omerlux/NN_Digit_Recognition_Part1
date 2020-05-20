@@ -1,14 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plot
 import scipy
+import math
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import log_loss
 
 
 def sigmoid(z):
-    """ Sigmoid function
-    1.0 / (1.0 + np.exp(-z))"""
-    return scipy.special.expit(z)
+    """ Sigmoid function"""
+    return 1.0 / (1.0 + np.exp(-z))
+    # return scipy.special.expit(z)
 
 
 def sigmoid_derivative(z):
@@ -46,26 +47,29 @@ def cost_func_single(out, y):
 
 
 class network(object):
-    def __init__(self, sizes, cost='cross-entropy'):  # sizes=[#inputs, #2nd layer, .... , #outputs]
+    def __init__(self, sizes, cost='cross-entropy', regularization='none', reg_lambda='0'):  # sizes=[#inputs, #2nd layer, .... , #outputs]
         """ Initializing the network object
         sizes is array that will contain the number of neurons in each layer.
         the weights and biases for each neuron will be randomly chosen from a Norm~(meu,sigma) cdf"""
         print ('Initializing network model object...')
-        self.cost = cost
         self.sizes = sizes
         self.num_of_layers = len(sizes)
+        self.cost = cost
+        self.regularization = regularization
+        self.reg_lambda = reg_lambda
         # Biases initiate - randomize by normal distribution biases as the numbers of neurons in the network (without
         # input neurons)
-        sigma = 0.5
+        sigma = 1
         meu = 0
         self.biases = [sigma * np.random.randn(dimensions, 1) + meu for dimensions in sizes[1:]]
         self.delta_biases = [np.zeros((dimensions, 1)) for dimensions in sizes[1:]]
         self.delta_sqr_biases = [np.zeros((dimensions, 1)) for dimensions in sizes[1:]]
         # dimensions: [#2nd layer, ... , #outputs], so we have X biases as the numbers of neurons except the inputs
         # Weights initiate - randomize by normal distribution weights for each neuron
-        sigma2 = 0.5
+        sigma2 = 1
         meu2 = 0
-        self.weights = [sigma2 * np.random.randn(dim2, dim1) + meu2 for (dim1, dim2) in zip(sizes[:-1], sizes[1:])]
+        # /np.sqrt(dim1) - smart weights initialization
+        self.weights = [sigma2 * np.random.randn(dim2, dim1) / np.sqrt(dim1) + meu2 for (dim1, dim2) in zip(sizes[:-1], sizes[1:])]
         self.delta_weights = [np.zeros((dim2, dim1)) for (dim1, dim2) in zip(sizes[:-1], sizes[1:])]
         self.delta_sqr_weights = [np.zeros((dim2, dim1)) for (dim1, dim2) in zip(sizes[:-1], sizes[1:])]
         # size[:-1], size[1:] creates pairs of elements in the sequence sizes with the next element,
@@ -186,12 +190,30 @@ class network(object):
         # --> we saved all the changes in 'w' and 'b' for the specific example.
         return nabla_b_single, nabla_w_single
 
-    def update_wb(self, nabla_biases, nabla_weights, eta, len_batch):
+    def update_wb(self, nabla_biases, nabla_weights, eta, len_batch, len_training_set):
+        n = len_training_set
         # normalizing the results as the number of exmaples
-        self.biases = [b - (eta / len_batch) * nb
-                       for b, nb in zip(self.biases, nabla_biases)]
-        self.weights = [w - (eta / len_batch) * nw
-                        for w, nw in zip(self.weights, nabla_weights)]
+        if self.regularization == 'none':
+            self.biases = [b - (eta / len_batch) * nb
+                           for b, nb in zip(self.biases, nabla_biases)]
+            self.weights = [w - (eta / len_batch) * nw
+                            for w, nw in zip(self.weights, nabla_weights)]
+        # implementing regularization (using reg_lambda )
+        # L1 regularization -
+        if self.regularization == 'L1':
+            # print ("Regularization L1 - lambda {}\n").format(self.reg_lambda)
+            self.biases = [b - (eta / len_batch) * nb
+                           for b, nb in zip(self.biases, nabla_biases)]
+            self.weights = [w - ((eta * self.reg_lambda) / n) * np.sign(w) - (eta / len_batch) * nw
+                            for w, nw in zip(self.weights, nabla_weights)]
+        # L2 regularization -
+        elif self.regularization == 'L2':
+            # print ("Regularization L2 - lambda {}\n").format(self.reg_lambda)
+            self.biases = [b - (eta / len_batch) * nb
+                           for b, nb in zip(self.biases, nabla_biases)]
+            self.weights = [(1 - (eta * self.reg_lambda) / n) * w - (eta / len_batch) * nw
+                            for w, nw in zip(self.weights, nabla_weights)]
+
 
     def update_wb_momentum(self, nabla_biases, nabla_weights, eta, len_batch):
         """ check the website https://ruder.io/optimizing-gradient-descent/index.html#rmsprop to see momentum

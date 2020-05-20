@@ -25,12 +25,13 @@ class SGD(object):
         """ 1 step for 1 batch - updates the network's weights and biases
         :returns negative log loss, gradient norms"""
         batch = self.data_reader.get_batch(self.batch_size, 'train')
+        len_training_set = len(self.data_reader.train)
 
         if optimizer == 'SGD':             # SGD is the normal gradient descent
             # getting gradient of weights and biases
             nabla_biases, nabla_weights = self.network.back_prop(batch)
             # updating them
-            self.network.update_wb(nabla_biases, nabla_weights, self.eta, len(batch))
+            self.network.update_wb(nabla_biases, nabla_weights, self.eta, len(batch), len_training_set)
         elif optimizer == 'Momentum':      # Momentum optimizer- check in here -> https://ruder.io/optimizing-gradient-descent/index.html#rmsprop
             # getting gradient of weights and biases
             nabla_biases, nabla_weights = self.network.back_prop(batch)
@@ -102,7 +103,7 @@ class SGD(object):
             sum_valid, nll = self.predict(self.data_reader.valid, 'loss')  # checking the valid tests (5k)
             max_valid = len(self.data_reader.valid)
             elapsed_time = time.time() - start_time
-            print ("EPOCH {0} - for {10} optimizer, {13} cost function:\n"
+            print ("EPOCH {0} - for {10} optimizer with eta {16}, {13} cost function, regularization {14} with lambda {15}:\n"
                    "    Negative Log Loss (Valid): {1}\n"
                    "    Accuracy training examples: {2} / {3}  =  {11}%\n"
                    "    Accuracy validation examples: {4} / {5}  =  {12}%\n"
@@ -110,7 +111,7 @@ class SGD(object):
                    "    Epoch elapsed time: {9} seconds."). \
                 format(i, round(nll, 4), sum_train, max_train, sum_valid, max_valid, avg_gn, max_gn, min_gn, elapsed_time,
                        optimizer, round(100*sum_train/(1.0*max_train), 2), round(100*sum_valid/(1.0*max_valid), 2),
-                       self.network.cost)
+                       self.network.cost, self.network.regularization, self.network.reg_lambda, self.eta)
             nll_learn_curve.append(nll)
             train_passed.append(sum_train)
             valid_passed.append(sum_valid)
@@ -123,8 +124,8 @@ class SGD(object):
         plt.plot(epoch, nll_learn_curve)
         plt.xlabel('Epoch #')
         plt.ylabel('Negative Log Loss (w.r.t epoch)')
-        plt.title('Learning Curve - Negative log loss\n{} optimizer, {} cost function'
-                  .format(optimizer, self.network.cost))
+        plt.title('Learning Curve - Negative log loss cost\n{} optimizer with eta {}, {} cost function\nregularization {} with lambda {}'
+                  .format(optimizer, self.network.cost, self.eta, self.network.regularization, self.network.reg_lambda))
         plt.grid()
         plt.show()
 
@@ -133,9 +134,9 @@ class SGD(object):
         plt.plot(epoch, train_passed)
         plt.xlabel('Epoch #')
         plt.ylabel('Training passed')
-        plt.title('Training 55k and Validation 5k Accuracy Curve\n{} optimizer, {} cost function'
-                  .format(optimizer, self.network.cost))
         plt.grid()
+        plt.title('Training 55k and Validation 5k Accuracy Curve\n{} optimizer with eta {}, {} cost function\nregularization {} with lambda {}'
+                  .format(optimizer, self.network.cost, self.eta, self.network.regularization, self.network.reg_lambda))
         plt.subplot(212)
         plt.plot(epoch, valid_passed)
         plt.xlabel('Epoch #')
@@ -150,6 +151,7 @@ class SGD(object):
         plt.legend(loc="upper left")
         plt.xlabel('Epoch #')
         plt.ylabel('Gradient Norm')
-        plt.title('Gradient Norms per Epoch\n{} optimizer, {} cost function'.format(optimizer, self.network.cost))
+        plt.title('Gradient Norms per Epoch\n{} optimizer with eta {}, {} cost function\nregularization {} with lambda {}'
+                  .format(optimizer, self.network.cost, self.eta, self.network.regularization, self.network.reg_lambda))
         plt.grid()
         plt.show()
