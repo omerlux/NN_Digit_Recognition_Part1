@@ -11,6 +11,12 @@ The optimizers are:
 2. Momentum.
 3. RMSProp.
 
+Added regularization methods:
+1. L1.
+2. L2.
+
+Added no-improment-in-n method for "eta" hyper-parameter, and for "number of epochs" parameter.
+
 Results are in "Few Tests.pdf".
 
 To know more about the project:    http://neuralnetworksanddeeplearning.com/index.html by Michael Nielson / Dec 2019
