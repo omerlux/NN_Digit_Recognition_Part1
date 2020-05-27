@@ -14,8 +14,8 @@ The optimizers are:
 Added regularization methods:
 1. L1.
 2. L2.
-
-Added no-improment-in-n method for "eta" hyper-parameter, and for "number of epochs" parameter.
+3. Early stopping - no-improment-in-n epochs will stop the learning.
+4. Early stopping - no-improment-in-n will decrese learning rate until eta is eta/128. (After that the learning will stop)
 
 Results are in "Few Tests.pdf".
 
