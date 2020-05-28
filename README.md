@@ -16,6 +16,7 @@ Added regularization methods:
 2. L2.
 3. Early stopping - no-improment-in-n epochs will stop the learning.
 4. Early stopping - no-improment-in-n will decrese learning rate until eta is eta/128. (After that the learning will stop)
+5. Weights constraints - limited to range (-1,1)
 
 Results are in "Few Tests.pdf".
 
