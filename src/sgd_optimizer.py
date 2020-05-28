@@ -1,3 +1,4 @@
+import sys
 import time
 import mnist_dreader
 import numpy as np
@@ -27,17 +28,17 @@ class SGD(object):
         batch = self.data_reader.get_batch(self.batch_size, 'train')
         len_training_set = len(self.data_reader.train)
 
-        if optimizer == 'SGD':             # SGD is the normal gradient descent
+        if optimizer == 'SGD':  # SGD is the normal gradient descent
             # getting gradient of weights and biases
             nabla_biases, nabla_weights = self.network.back_prop(batch)
             # updating them
             self.network.update_wb(nabla_biases, nabla_weights, self.eta, len(batch), len_training_set)
-        elif optimizer == 'Momentum':      # Momentum optimizer- check in here -> https://ruder.io/optimizing-gradient-descent/index.html#rmsprop
+        elif optimizer == 'Momentum':  # Momentum optimizer- check in here -> https://ruder.io/optimizing-gradient-descent/index.html#rmsprop
             # getting gradient of weights and biases
             nabla_biases, nabla_weights = self.network.back_prop(batch)
             # updating them
             self.network.update_wb_momentum(nabla_biases, nabla_weights, self.eta, len(batch))
-        elif optimizer == 'RMSProp':         # Adam optimizer
+        elif optimizer == 'RMSProp':  # Adam optimizer
             # getting gradient of weights and biases
             nabla_biases, nabla_weights, nabla_sqr_b, nabla_sqr_w = self.network.back_prop_RMSprop(batch)
             # updating them
@@ -65,9 +66,9 @@ class SGD(object):
             ##         for w_in in nw[w_layer][w_neuron]:
             ##             gradient_norms.append(w_in)
 
-        max_gn = 0 #np.amax(gradient_norms)      # max gradient norm #TODO: comment to run fast
-        min_gn = 0 #np.amin(gradient_norms)      # min gradient norm
-        avg_gn = 0 #np.mean(gradient_norms)      # average gradient norm
+        max_gn = 0  # np.amax(gradient_norms)      # max gradient norm #TODO: comment to run fast
+        min_gn = 0  # np.amin(gradient_norms)      # min gradient norm
+        avg_gn = 0  # np.mean(gradient_norms)      # average gradient norm
 
         return avg_gn, min_gn, max_gn  # return negative log loss of the training
 
@@ -81,12 +82,12 @@ class SGD(object):
                            for (out, tup_xy) in zip(test_data_out, test_data)]
             return sum(int(x == y) for (x, y) in data_result), loss_nll
         else:
-            test_data_out = self.network.feed_forward(test_data, 1)     # feed forward for a batch
-            data_result = [(np.argmax(out), tup_xy[1])                # argmax from result and y-s
+            test_data_out = self.network.feed_forward(test_data, 1)  # feed forward for a batch
+            data_result = [(np.argmax(out), tup_xy[1])  # argmax from result and y-s
                            for (out, tup_xy) in zip(test_data_out, test_data)]
             return sum(int(x == y) for (x, y) in data_result)
 
-    def training_program(self, optimizer):
+    def training_program(self, optimizer, noimpin_n=0, eta_modify=0):
         """ Training  the network for epochs_size epochs """
         nll_learn_curve = []
         train_passed = []
@@ -94,8 +95,13 @@ class SGD(object):
         max_gradient = []
         min_gradient = []
         avg_gradient = []
+
+        eta0 = self.eta
+        eta_div = 1
+
         for i in range(self.epochs_size):
-            print ("Started Epoch {0}...").format(i)
+
+            print ("\nStarted Epoch {0}...").format(i)
             start_time = time.time()  # counting time
             avg_gn, min_gn, max_gn = self.train_epoch(optimizer)  # training 1 epoch + saving NLL
             sum_train = self.predict(self.data_reader.train, '')  # checking the valid trains (55k)
@@ -103,14 +109,17 @@ class SGD(object):
             sum_valid, nll = self.predict(self.data_reader.valid, 'loss')  # checking the valid tests (5k)
             max_valid = len(self.data_reader.valid)
             elapsed_time = time.time() - start_time
-            print ("EPOCH {0} - for {10} optimizer with eta {16}, {13} cost function, regularization {14} with lambda {15}:\n"
-                   "    Negative Log Loss (Valid): {1}\n"
-                   "    Accuracy training examples: {2} / {3}  =  {11}%\n"
-                   "    Accuracy validation examples: {4} / {5}  =  {12}%\n"
-                   #"    Gradient norm: Average = {6}, Max = {7}, Min = {8}\n"
-                   "    Epoch elapsed time: {9} seconds."). \
-                format(i, round(nll, 4), sum_train, max_train, sum_valid, max_valid, avg_gn, max_gn, min_gn, elapsed_time,
-                       optimizer, round(100*sum_train/(1.0*max_train), 2), round(100*sum_valid/(1.0*max_valid), 2),
+            print (
+                "EPOCH {0} - for {10} optimizer with eta {16}, {13} cost function, regularization {14} with lambda {15}:\n"
+                "    Negative Log Loss (Valid): {1}\n"
+                "    Accuracy training examples: {2} / {3}  =  {11}%\n"
+                "    Accuracy validation examples: {4} / {5}  =  {12}%\n"
+                # "    Gradient norm: Average = {6}, Max = {7}, Min = {8}\n"
+                "    Epoch elapsed time: {9} seconds.\n"). \
+                format(i, round(nll, 4), sum_train, max_train, sum_valid, max_valid, avg_gn, max_gn, min_gn,
+                       round(elapsed_time, 2),
+                       optimizer, round(100 * sum_train / (1.0 * max_train), 2),
+                       round(100 * sum_valid / (1.0 * max_valid), 2),
                        self.network.cost, self.network.regularization, self.network.reg_lambda, self.eta)
             nll_learn_curve.append(nll)
             train_passed.append(sum_train)
@@ -119,13 +128,31 @@ class SGD(object):
             min_gradient.append(min_gn)
             avg_gradient.append(avg_gn)
 
-        epoch = range(self.epochs_size)
+            # no-improvement-in-n
+            if noimpin_n != 0 and noimpin_n <= i:  # no-improment-in-n activated
+                if valid_passed[-1 - noimpin_n] >= max(valid_passed[-noimpin_n:]):
+                    print("No improvment in {} epochs. Training has stopped.").format(noimpin_n)
+                    break
+
+            # no-improvement - eta modify
+            if eta_modify != 0 and eta_modify <= i:  # no-improvement-eta activated
+                if valid_passed[-1-eta_modify] >= max(valid_passed[-eta_modify:]) and self.eta == eta0 / 128:
+                    print("No improvment in {} epochs - Eta is eta0/128. Training has stopped.").format(eta_modify)
+                    break
+                elif valid_passed[-1-eta_modify] >= max(valid_passed[-eta_modify:]):
+                    eta_div *= 2
+                    print("No improvment in {} epochs - Eta is eta0/{}.").format(eta_modify, eta_div)
+                    self.eta /= 2.0
+
+
+        epoch = range(len(valid_passed))
         # plotting learning curve (nll w.r.t. epoch)
         plt.plot(epoch, nll_learn_curve)
         plt.xlabel('Epoch #')
         plt.ylabel('Negative Log Loss (w.r.t epoch)')
-        plt.title('Learning Curve - Negative log loss cost\n{} optimizer with eta {}, {} cost function\nregularization {} with lambda {}'
-                  .format(optimizer, self.network.cost, self.eta, self.network.regularization, self.network.reg_lambda))
+        plt.title(
+            'Learning Curve - Negative log loss cost\n{} optimizer with eta {}, {} cost function\nregularization {} with lambda {}'
+            .format(optimizer, self.network.cost, self.eta, self.network.regularization, self.network.reg_lambda))
         plt.grid()
         plt.show()
 
@@ -135,8 +162,9 @@ class SGD(object):
         plt.xlabel('Epoch #')
         plt.ylabel('Training passed')
         plt.grid()
-        plt.title('Training 55k and Validation 5k Accuracy Curve\n{} optimizer with eta {}, {} cost function\nregularization {} with lambda {}'
-                  .format(optimizer, self.network.cost, self.eta, self.network.regularization, self.network.reg_lambda))
+        plt.title(
+            'Training 55k and Validation 5k Accuracy Curve\n{} optimizer with eta {}, {} cost function\nregularization {} with lambda {}'
+            .format(optimizer, self.network.cost, self.eta, self.network.regularization, self.network.reg_lambda))
         plt.subplot(212)
         plt.plot(epoch, valid_passed)
         plt.xlabel('Epoch #')
@@ -151,7 +179,8 @@ class SGD(object):
         plt.legend(loc="upper left")
         plt.xlabel('Epoch #')
         plt.ylabel('Gradient Norm')
-        plt.title('Gradient Norms per Epoch\n{} optimizer with eta {}, {} cost function\nregularization {} with lambda {}'
-                  .format(optimizer, self.network.cost, self.eta, self.network.regularization, self.network.reg_lambda))
+        plt.title(
+            'Gradient Norms per Epoch\n{} optimizer with eta {}, {} cost function\nregularization {} with lambda {}'
+            .format(optimizer, self.network.cost, self.eta, self.network.regularization, self.network.reg_lambda))
         plt.grid()
         plt.show()

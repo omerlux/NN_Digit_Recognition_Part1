@@ -17,16 +17,26 @@ def sigmoid_derivative(z):
     return sigmoid(z) * (1 - sigmoid(z))
 
 
-def quadratic_cost_derivative(output, y, z):
+def quadratic_cost_derivative(output, y, z, network):
     """for the cost function (1/2)*(a-y)^2
     the derivative is a-y"""
-    return (output - y)*sigmoid_derivative(z)
+    # Regularization Confidence Penalty
+    if network.regularization == 'Confidence Penalty':
+        network.confidence_penalty = (output - y - network.reg_lambda * network.confidence_penalty) * sigmoid_derivative(z)
+        return network.confidence_penalty
+    else:
+        return (output - y) * sigmoid_derivative(z)
 
 
-def CE_cost_derivative(output, y, z):
+def CE_cost_derivative(output, y, z, network):
     """for the cost function [ y*ln(a) + (1-y)*ln(1-a) ]
     the derivative is a-y"""
-    return output - y
+    # Regularization Confidence Penalty
+    if network.regularization == 'Confidence Penalty':
+        network.confidence_penalty = output - y - network.reg_lambda * network.confidence_penalty
+        return network.confidence_penalty
+    else:
+        return output - y
 
 
 def vectorized_res(j):
@@ -47,7 +57,8 @@ def cost_func_single(out, y):
 
 
 class network(object):
-    def __init__(self, sizes, cost='cross-entropy', regularization='none', reg_lambda='0'):  # sizes=[#inputs, #2nd layer, .... , #outputs]
+    def __init__(self, sizes, cost='cross-entropy', regularization='none',
+                 reg_lambda='0'):  # sizes=[#inputs, #2nd layer, .... , #outputs]
         """ Initializing the network object
         sizes is array that will contain the number of neurons in each layer.
         the weights and biases for each neuron will be randomly chosen from a Norm~(meu,sigma) cdf"""
@@ -55,6 +66,7 @@ class network(object):
         self.sizes = sizes
         self.num_of_layers = len(sizes)
         self.cost = cost
+        self.confidence_penalty = 0
         self.regularization = regularization
         self.reg_lambda = reg_lambda
         # Biases initiate - randomize by normal distribution biases as the numbers of neurons in the network (without
@@ -69,7 +81,8 @@ class network(object):
         sigma2 = 1
         meu2 = 0
         # /np.sqrt(dim1) - smart weights initialization
-        self.weights = [sigma2 * np.random.randn(dim2, dim1) / np.sqrt(dim1) + meu2 for (dim1, dim2) in zip(sizes[:-1], sizes[1:])]
+        self.weights = [sigma2 * np.random.randn(dim2, dim1) / np.sqrt(dim1) + meu2 for (dim1, dim2) in
+                        zip(sizes[:-1], sizes[1:])]
         self.delta_weights = [np.zeros((dim2, dim1)) for (dim1, dim2) in zip(sizes[:-1], sizes[1:])]
         self.delta_sqr_weights = [np.zeros((dim2, dim1)) for (dim1, dim2) in zip(sizes[:-1], sizes[1:])]
         # size[:-1], size[1:] creates pairs of elements in the sequence sizes with the next element,
@@ -149,8 +162,8 @@ class network(object):
             nabla_w = [nw + delta_nw for nw, delta_nw in zip(nabla_w, nabla_w_single)]
 
             # for ADAM optimizer - square calculate
-            nabla_sqr_b = [nb + delta_nb**2 for nb, delta_nb in zip(nabla_sqr_b, nabla_b_single)]  # nablas square
-            nabla_sqr_w = [nw + delta_nw**2 for nw, delta_nw in zip(nabla_sqr_w, nabla_w_single)]
+            nabla_sqr_b = [nb + delta_nb ** 2 for nb, delta_nb in zip(nabla_sqr_b, nabla_b_single)]  # nablas square
+            nabla_sqr_w = [nw + delta_nw ** 2 for nw, delta_nw in zip(nabla_sqr_w, nabla_w_single)]
 
         return [nabla_b, nabla_w, nabla_sqr_b, nabla_sqr_w]
 
@@ -176,9 +189,11 @@ class network(object):
         # BP3 -> Nabla_C_bj_l = delta_j_l
         # BP4 -> Nabla_C_wjk_l = delta_j_l * activation_k_l-1
         if self.cost == 'quadratic':
-            delta = quadratic_cost_derivative(activations[-1], vectorized_res(y), zs[-1]) # by BP1 - check func* sigmoid_derivative(zs[-1])  # by BP1 equation
-        else: #self.cost == 'cross-entropy':
-            delta = CE_cost_derivative(activations[-1], vectorized_res(y), zs[-1])  # by BP1 - check func
+            delta = quadratic_cost_derivative(activations[-1], vectorized_res(y), zs[-1], self)
+            # by BP1 - check func* sigmoid_derivative(zs[-1])  # by BP1 equation
+        else:  # self.cost == 'cross-entropy':
+            delta = CE_cost_derivative(activations[-1], vectorized_res(y), zs[-1], self)
+            # by BP1 - check func
         nabla_b_single[-1] = delta  # by BP3
         nabla_w_single[-1] = np.dot(delta, np.transpose(activations[-2]))  # by BP4 # TODO: check size of both
         # calculating all the nabla_w when walking backwards in the network
@@ -193,7 +208,7 @@ class network(object):
     def update_wb(self, nabla_biases, nabla_weights, eta, len_batch, len_training_set):
         n = len_training_set
         # normalizing the results as the number of exmaples
-        if self.regularization == 'none':
+        if self.regularization == 'none' or self.regularization == 'Confidence Penalty':
             self.biases = [b - (eta / len_batch) * nb
                            for b, nb in zip(self.biases, nabla_biases)]
             self.weights = [w - (eta / len_batch) * nw
@@ -214,6 +229,14 @@ class network(object):
             self.weights = [(1 - (eta * self.reg_lambda) / n) * w - (eta / len_batch) * nw
                             for w, nw in zip(self.weights, nabla_weights)]
 
+        # Weights constraints regularization -
+        elif self.regularization == 'Weights Constraints':
+            self.biases = [b - (eta / len_batch) * nb
+                           for b, nb in zip(self.biases, nabla_biases)]
+            self.weights = [w - (eta / len_batch) * nw
+                            for w, nw in zip(self.weights, nabla_weights)]
+            self.weights = [np.minimum(w, self.reg_lambda) for w in self.weights]
+            self.weights = [np.maximum(w, (-1)*(self.reg_lambda)) for w in self.weights]
 
     def update_wb_momentum(self, nabla_biases, nabla_weights, eta, len_batch):
         """ check the website https://ruder.io/optimizing-gradient-descent/index.html#rmsprop to see momentum
@@ -221,9 +244,9 @@ class network(object):
         # normalizing the results as the number of exmaples
         beta = 0.9
         # mt = beta * mt-1 + (1-beta) * g
-        self.delta_biases = [v * beta + (1-beta) * (nb / len_batch)
+        self.delta_biases = [v * beta + (1 - beta) * (nb / len_batch)
                              for v, nb in zip(self.delta_biases, nabla_biases)]
-        self.delta_weights = [v * beta + (1-beta) * (nw / len_batch)
+        self.delta_weights = [v * beta + (1 - beta) * (nw / len_batch)
                               for v, nw in zip(self.delta_weights, nabla_weights)]
         # wt = wt-1 - alpha * mt
         self.biases = [b - eta * nb
@@ -235,8 +258,8 @@ class network(object):
         """ check the website https://ruder.io/optimizing-gradient-descent/index.html#rmsprop to see RMSprop
         and https://towardsdatascience.com/10-gradient-descent-optimisation-algorithms-86989510b5e9"""
         # normalizing the results as the number of exmaples
-        beta = 0.9          # recommended
-        alpha = 0.001       # recommended
+        beta = 0.9  # recommended
+        alpha = 0.001  # recommended
         epsilon = 10 ** -6  # recommended
         # vt = beta*bt-1 + (1-beta) * g^2
         self.delta_sqr_biases = [v_prev * beta + (1 - beta) * (nb2 / len_batch) ** 2

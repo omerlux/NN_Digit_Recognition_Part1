@@ -19,8 +19,8 @@ class dataReader(object):
         buffer = f.read(image_size * image_size * num_images)
         data = np.frombuffer(buffer, dtype=np.uint8).astype(np.int32)  # translating into 0 to 255
         data = data.reshape(num_images, image_size, image_size, 1).squeeze()  # data = 60k x 28 x 28 with 1 value in it
-        training_55k_x = [a/255.0 for a in data[0:55000]]            # vector normalized
-        validation_5k_x = [a/255.0 for a in data[55000: 60000]]
+        training_55k_x = data[0:55000]/255.           # vector normalized
+        validation_5k_x = data[55000: 60000]/255.
         f.close()
         f = gzip.open('../samples/train-labels-idx1-ubyte.gz', 'r')  # 60k train & valid - labels
         f.read(8)  # reading by 16-byte double
@@ -39,7 +39,7 @@ class dataReader(object):
         buffer = f.read(image_size * image_size * num_images)
         data = np.frombuffer(buffer, dtype=np.uint8).astype(np.uint8)  # translating into 0 to 255
         data = data.reshape(num_images, image_size, image_size, 1).squeeze()  # data = 60k x 28 x 28 with
-        test_10k_x = [a/255.0 for a in data[0: 10000]]
+        test_10k_x = data[0: 10000]/255.
         f.close()
         f = gzip.open('../samples/t10k-labels-idx1-ubyte.gz', 'r')  # 10k tests - lbles
         f.read(8)  # reading by 16-byte double
