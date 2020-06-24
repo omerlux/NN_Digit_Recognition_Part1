@@ -7,7 +7,7 @@ import mnist_dreader
 import network_model
 import sgd_optimizer
 
-# dreader = mnist_dreader.dataReader()  # constructing mnist data reader object
+dreader = mnist_dreader.dataReader()  # constructing mnist data reader object
 
 # # Test 1 - circular batches
 # for i in range(1, 12):
@@ -44,7 +44,7 @@ import sgd_optimizer
 # batch = dreader.get_batch(30, 'train')
 # # nabla_wj ~ (C(w + epsilon*e_j) - C(w))/epsilon    *when e_j is the unit vector j
 # gradient_biases, gradient_weights = network.back_prop(batch)  # should be the real derivative of the w
-# epsilon = 10 ** -7
+# epsilon = 10 ** -4
 # gradient_w_avg_relative_error = 0
 # gradient_w_sum_relative_error = 0
 # max_relative_error = 0
@@ -86,27 +86,27 @@ import sgd_optimizer
 # SGD_optimizer = sgd_optimizer.SGD(network, learning_rate, batch_size, epochs)
 # SGD_optimizer.training_program()
 
-# Comparing SGD to Momentum
-batch_size = 100
-epochs = 10
-
-# Success test - do not delete - testing the no-improv ETA change by 3
-epochs = 10
-learning_rate = 0.5        # recommended
-
-network_SGD_Confidence_Penalty = \
-    network_model.network([784, 30, 10], 'cross-entropy', regularization='Confidence Penalty', reg_lambda=0.3)  # making the network SGD
-SGD_optimizer = sgd_optimizer.SGD(network_SGD_Confidence_Penalty, learning_rate, batch_size, epochs)
-SGD_optimizer.training_program('SGD')   # SGD optimizer chosengit
-
-network_SGD_Weights_Constraints = \
-    network_model.network([784, 30, 10], 'cross-entropy', regularization='Weights Constraints', reg_lambda=1.5)  # making the network SGD
-SGD_optimizer = sgd_optimizer.SGD(network_SGD_Weights_Constraints, learning_rate, batch_size, epochs)
-SGD_optimizer.training_program('SGD')   # SGD optimizer chosen
-
-network_SGD_compareto = network_model.network([784, 30, 10], 'cross-entropy', regularization='none')  # making the network SGD
-SGD_optimizer = sgd_optimizer.SGD(network_SGD_compareto, learning_rate, batch_size, epochs)
-SGD_optimizer.training_program('SGD')   # SGD optimizer chosen
+# # Comparing SGD to Momentum
+# batch_size = 100
+# epochs = 10
+#
+# # Success test - do not delete - testing the no-improv ETA change by 3
+# epochs = 20
+# learning_rate = 0.5        # recommended
+#
+# network_SGD_Confidence_Penalty = \
+#     network_model.network([784, 30, 10], 'cross-entropy', regularization='Confidence Penalty', reg_lambda=0.3)  # making the network SGD
+# SGD_optimizer = sgd_optimizer.SGD(network_SGD_Confidence_Penalty, learning_rate, batch_size, epochs)
+# SGD_optimizer.training_program('SGD')   # SGD optimizer chosengit
+#
+# network_SGD_Weights_Constraints = \
+#     network_model.network([784, 30, 10], 'cross-entropy', regularization='Weights Constraints', reg_lambda=1.5)  # making the network SGD
+# SGD_optimizer = sgd_optimizer.SGD(network_SGD_Weights_Constraints, learning_rate, batch_size, epochs)
+# SGD_optimizer.training_program('SGD')   # SGD optimizer chosen
+#
+# network_SGD_compareto = network_model.network([784,30, 10], 'cross-entropy', regularization='none')  # making the network SGD
+# SGD_optimizer = sgd_optimizer.SGD(network_SGD_compareto, learning_rate, batch_size, epochs)
+# SGD_optimizer.training_program('SGD', noimpin_n=5, eta_modify=3)   # SGD optimizer chosen
 
 
 # # Success test - do not delete - testing the no-improv ETA change by 3
@@ -120,6 +120,7 @@ SGD_optimizer.training_program('SGD')   # SGD optimizer chosen
 # # Success test - do not delete - testing the no-improvment-in-5
 # epochs = 30
 # n = 5
+# batch_size = 100
 # learning_rate = 0.5        # recommended
 # network_SGD_no_imp_in_n = network_model.network([784, 30, 10], 'cross-entropy', 'L1', 0.1)  # making the network SGD
 # SGD_optimizer = sgd_optimizer.SGD(network_SGD_no_imp_in_n, learning_rate, batch_size, epochs)
@@ -193,8 +194,36 @@ SGD_optimizer.training_program('SGD')   # SGD optimizer chosen
 
 
 
+# Overall test
 
+# test - do not delete - testing the no-improv ETA change by 3
+epochs = 30
+batch_size = 100
 
+# Weights constraints regularization
+for i in range(1, 10):
+    learning_rate = 0.5  # recommended
+    network_SGD_Weights_Constraints = \
+        network_model.network([784, 30, 10], 'cross-entropy', regularization='Weights Constraints', reg_lambda=0.25*i)
+    SGD_optimizer = sgd_optimizer.SGD(network_SGD_Weights_Constraints, learning_rate, batch_size, epochs)
+    SGD_optimizer.training_program('SGD')   # SGD optimizer chosen
 
+# L1 regularization
+for i in range(0, 10):
+    learning_rate = 0.5        # recommended
+    network_SGD_L1 = network_model.network([784, 30, 10], 'cross-entropy', regularization='L1', reg_lambda=0.1*i)
+    SGD_optimizer = sgd_optimizer.SGD(network_SGD_L1, learning_rate, batch_size, epochs)
+    SGD_optimizer.training_program('SGD')   # SGD optimizer chosen
 
+# L2 regularization
+for i in range(0, 10):
+    learning_rate = 0.5        # recommended
+    network_SGD_L2 = network_model.network([784, 30, 10], 'cross-entropy', regularization='L2', reg_lambda=0.1*i)
+    SGD_optimizer = sgd_optimizer.SGD(network_SGD_L2, learning_rate, batch_size, epochs)
+    SGD_optimizer.training_program('SGD')   # SGD optimizer chosen
 
+# No improvment in n - eta modify:
+for i in range(0, 7):
+    network_SGD_etaMod = network_model.network([784,30, 10], 'cross-entropy', regularization='none')  # making the network SGD
+    SGD_optimizer = sgd_optimizer.SGD(network_SGD_etaMod, learning_rate, batch_size, epochs)
+    SGD_optimizer.training_program('SGD', noimpin_n=5, eta_modify=i)   # SGD optimizer chosen

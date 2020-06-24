@@ -183,6 +183,9 @@ class network(object):
             activations.append(activation)  # saving activations
         # --> we saved all the activations and zs for each layer
 
+        # TODO: Soft-max - NOT WORKING
+        # activations[-1] = np.exp(activations[-1]) / np.sum(np.exp(activations[-1]))
+
         # GOING BACKWARD to calculate the cost change by:
         # BP1 -> delta_L = Nabla_C_a . sigmoid_derivative(z_L)
         # BP2 -> delta_l = ((w_l+1)T * delta_l+1) . sigmoid_derivative(z_l)
@@ -195,13 +198,13 @@ class network(object):
             delta = CE_cost_derivative(activations[-1], vectorized_res(y), zs[-1], self)
             # by BP1 - check func
         nabla_b_single[-1] = delta  # by BP3
-        nabla_w_single[-1] = np.dot(delta, np.transpose(activations[-2]))  # by BP4 # TODO: check size of both
+        nabla_w_single[-1] = np.dot(delta, np.transpose(activations[-2]))  # by BP4
         # calculating all the nabla_w when walking backwards in the network
         for l in xrange(2, self.num_of_layers):
             z = zs[-l]
             delta = np.dot(np.transpose(self.weights[-l + 1]), delta) * sigmoid_derivative(z)  # by BP2
             nabla_b_single[-l] = delta  # by BP3
-            nabla_w_single[-l] = np.dot(delta, np.transpose(activations[-l - 1]))  # by BP4 # TODO: check size of both
+            nabla_w_single[-l] = np.dot(delta, np.transpose(activations[-l - 1]))  # by BP4
         # --> we saved all the changes in 'w' and 'b' for the specific example.
         return nabla_b_single, nabla_w_single
 

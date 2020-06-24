@@ -75,7 +75,7 @@ class SGD(object):
     def predict(self, test_data, loss):
         """ Returns the number of the inputs for which the network
         outputs the correct result.
-        result is by the maximum activation"""
+        result is by the maximum activation """
         if loss == 'loss':
             test_data_out, loss_mse, loss_nll = self.network.feed_forward(test_data, 0)  # feed forward for a batch
             data_result = [(np.argmax(out), tup_xy[1])  # argmax from result and y-s
@@ -130,16 +130,16 @@ class SGD(object):
 
             # no-improvement-in-n
             if noimpin_n != 0 and noimpin_n <= i:  # no-improment-in-n activated
-                if valid_passed[-1 - noimpin_n] >= max(valid_passed[-noimpin_n:]):
+                if train_passed[-1 - noimpin_n] >= max(train_passed[-noimpin_n:]):
                     print("No improvment in {} epochs. Training has stopped.").format(noimpin_n)
                     break
 
             # no-improvement - eta modify
             if eta_modify != 0 and eta_modify <= i:  # no-improvement-eta activated
-                if valid_passed[-1-eta_modify] >= max(valid_passed[-eta_modify:]) and self.eta == eta0 / 128:
+                if train_passed[-1-eta_modify] >= max(train_passed[-eta_modify:]) and self.eta == eta0 / 128:
                     print("No improvment in {} epochs - Eta is eta0/128. Training has stopped.").format(eta_modify)
                     break
-                elif valid_passed[-1-eta_modify] >= max(valid_passed[-eta_modify:]):
+                elif train_passed[-1-eta_modify] >= max(train_passed[-eta_modify:]):
                     eta_div *= 2
                     print("No improvment in {} epochs - Eta is eta0/{}.").format(eta_modify, eta_div)
                     self.eta /= 2.0
