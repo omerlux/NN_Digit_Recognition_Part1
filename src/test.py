@@ -13,6 +13,8 @@ dreader = mnist_dreader.dataReader()  # constructing mnist data reader object
 # for i in range(1, 12):
 #     a = dreader.get_batch(1000, 'train')  # test for modulo batch
 
+# ----------------------------------------------------------------------
+
 # # Test 2 - shuffle train
 # fig = plot.figure()
 # for i in range(0, 3):
@@ -26,6 +28,8 @@ dreader = mnist_dreader.dataReader()  # constructing mnist data reader object
 #     plot.show()
 # plot.close(fig)
 
+# ----------------------------------------------------------------------
+
 # # Test 3 - print batch num and label
 # batch = dreader.get_batch(5, 'train')
 # for i in range(0, 5):
@@ -33,6 +37,8 @@ dreader = mnist_dreader.dataReader()  # constructing mnist data reader object
 #     plot.imshow(a)
 #     plot.show()
 #     print(batch[i][1])
+
+# ----------------------------------------------------------------------
 
 # network = network_model.network([784, 400, 200, 50, 10])  # making the network
 
@@ -77,6 +83,8 @@ dreader = mnist_dreader.dataReader()  # constructing mnist data reader object
 # print(gradient_w_avg_relative_error)
 # print(max_relative_error)
 
+# ----------------------------------------------------------------------
+
 # # Working learning MNIST #1
 # network = network_model.network([784, 400, 200, 50, 10])  # making the network
 # learning_rate = 3.0
@@ -85,6 +93,8 @@ dreader = mnist_dreader.dataReader()  # constructing mnist data reader object
 # # making Stochastic gradient descent optimizer
 # SGD_optimizer = sgd_optimizer.SGD(network, learning_rate, batch_size, epochs)
 # SGD_optimizer.training_program()
+
+# ----------------------------------------------------------------------
 
 # # Comparing SGD to Momentum
 # batch_size = 100
@@ -108,6 +118,7 @@ dreader = mnist_dreader.dataReader()  # constructing mnist data reader object
 # SGD_optimizer = sgd_optimizer.SGD(network_SGD_compareto, learning_rate, batch_size, epochs)
 # SGD_optimizer.training_program('SGD', noimpin_n=5, eta_modify=3)   # SGD optimizer chosen
 
+# ----------------------------------------------------------------------
 
 # # Success test - do not delete - testing the no-improv ETA change by 3
 # epochs = 30
@@ -126,6 +137,7 @@ dreader = mnist_dreader.dataReader()  # constructing mnist data reader object
 # SGD_optimizer = sgd_optimizer.SGD(network_SGD_no_imp_in_n, learning_rate, batch_size, epochs)
 # SGD_optimizer.training_program('SGD', n)   # SGD optimizer chosen
 
+# ----------------------------------------------------------------------
 
 # # Success test - do not delete -  finding eta, learning rate
 # learning_rate = 5.0
@@ -149,8 +161,7 @@ dreader = mnist_dreader.dataReader()  # constructing mnist data reader object
 # SGD_optimizer = sgd_optimizer.SGD(network_SGD_CE_eta01, learning_rate, batch_size, epochs)
 # SGD_optimizer.training_program('SGD')   # SGD optimizer chosen
 
-
-
+# ----------------------------------------------------------------------
 
 # # Success test - do not delete - finding lambda for regularization
 # learning_rate = 3.0         # recommended
@@ -170,6 +181,7 @@ dreader = mnist_dreader.dataReader()  # constructing mnist data reader object
 # SGD_optimizer = sgd_optimizer.SGD(network_SGD_CE_L1reg_lambda0p1, learning_rate, batch_size, epochs)
 # SGD_optimizer.training_program('SGD')   # SGD optimizer chosen
 
+# ----------------------------------------------------------------------
 
 # # Success test - do not delete
 # network_SGD_quad = network_model.network([784, 30, 10], 'quadratic', 'none')  # making the network SGD
@@ -193,7 +205,7 @@ dreader = mnist_dreader.dataReader()  # constructing mnist data reader object
 # SGD_optimizer.training_program('SGD')   # SGD optimizer chosen
 
 
-
+# ----------------------------------------------------------------------
 # Overall test
 
 # test - do not delete - testing the no-improv ETA change by 3

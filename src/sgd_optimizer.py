@@ -136,14 +136,13 @@ class SGD(object):
 
             # no-improvement - eta modify
             if eta_modify != 0 and eta_modify <= i:  # no-improvement-eta activated
-                if train_passed[-1-eta_modify] >= max(train_passed[-eta_modify:]) and self.eta == eta0 / 128:
+                if train_passed[-1 - eta_modify] >= max(train_passed[-eta_modify:]) and self.eta == eta0 / 128:
                     print("No improvment in {} epochs - Eta is eta0/128. Training has stopped.").format(eta_modify)
                     break
-                elif train_passed[-1-eta_modify] >= max(train_passed[-eta_modify:]):
+                elif train_passed[-1 - eta_modify] >= max(train_passed[-eta_modify:]):
                     eta_div *= 2
                     print("No improvment in {} epochs - Eta is eta0/{}.").format(eta_modify, eta_div)
                     self.eta /= 2.0
-
 
         epoch = range(len(valid_passed))
         # plotting learning curve (nll w.r.t. epoch)
@@ -152,24 +151,20 @@ class SGD(object):
         plt.ylabel('Negative Log Loss (w.r.t epoch)')
         plt.title(
             'Learning Curve - Negative log loss cost\n{} optimizer with eta {}, {} cost function\nregularization {} with lambda {}'
-            .format(optimizer, self.network.cost, self.eta, self.network.regularization, self.network.reg_lambda))
+                .format(optimizer, self.network.cost, self.eta, self.network.regularization, self.network.reg_lambda))
         plt.grid()
         plt.show()
 
         # plotting accuracy curve
-        plt.subplot(211)
-        plt.plot(epoch, train_passed)
+        plt.plot(epoch, np.round(np.true_divide(train_passed, max_train) * 100, 2), label='Train')
+        plt.plot(epoch,  np.round(np.true_divide(valid_passed, max_valid) * 100, 2), label='Validation')
+        plt.legend(loc="lower right")
         plt.xlabel('Epoch #')
-        plt.ylabel('Training passed')
+        plt.ylabel('Training passed (%)')
         plt.grid()
         plt.title(
             'Training 55k and Validation 5k Accuracy Curve\n{} optimizer with eta {}, {} cost function\nregularization {} with lambda {}'
-            .format(optimizer, self.network.cost, self.eta, self.network.regularization, self.network.reg_lambda))
-        plt.subplot(212)
-        plt.plot(epoch, valid_passed)
-        plt.xlabel('Epoch #')
-        plt.ylabel('Validations passed')
-        plt.grid()
+                .format(optimizer, self.network.cost, self.eta, self.network.regularization, self.network.reg_lambda))
         plt.show()
 
         # plotting gradient norms
@@ -181,6 +176,6 @@ class SGD(object):
         plt.ylabel('Gradient Norm')
         plt.title(
             'Gradient Norms per Epoch\n{} optimizer with eta {}, {} cost function\nregularization {} with lambda {}'
-            .format(optimizer, self.network.cost, self.eta, self.network.regularization, self.network.reg_lambda))
+                .format(optimizer, self.network.cost, self.eta, self.network.regularization, self.network.reg_lambda))
         plt.grid()
         plt.show()
